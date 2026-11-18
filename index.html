@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Potion Craft Potion Price Calculator</title>
+<style>
+  :root{
+    --bg:#15101c;
+    --panel:#1c1626;
+    --panel-2:#221b2e;
+    --border:#332a42;
+    --text:#e9e3f2;
+    --text-dim:#9c90ad;
+    --accent:#b07fe0;
+    --warn:#c99a3c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.45;
+  }
+  header{
+    padding:20px 24px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:21px;
+  }
+  header p{
+    margin:0 0 4px;
+    color:var(--text-dim);
+    font-size:14px;
+    max-width:860px;
+  }
+  nav.tabs{
+    display:flex;
+    gap:8px;
+    padding:14px 24px 0;
+    border-bottom:1px solid var(--border);
+    background:var(--panel);
+    flex-wrap:wrap;
+  }
+  nav.tabs .tab{
+    padding:10px 16px;
+    font-size:13.5px;
+    color:var(--text-dim);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    user-select:none;
+  }
+  nav.tabs .tab.active{
+    color:var(--text);
+    border-bottom-color:var(--accent);
+  }
+  section{ display:none; }
+  section.active{ display:block; }
+  .controls{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    padding:16px 24px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel);
+    align-items:center;
+  }
+  input[type="search"], input[type="number"]{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:14px;
+  }
+  input[type="search"]{
+    flex:1;
+    min-width:200px;
+  }
+  input[type="number"]{
+    width:90px;
+  }
+  select{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:14px;
+  }
+  .table-wrap{
+    padding:16px 24px 50px;
+    overflow-x:auto;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+  }
+  th, td{
+    text-align:left;
+    padding:8px 10px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  th{
+    color:var(--text-dim);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    position:sticky;
+    top:0;
+    background:var(--bg);
+    cursor:pointer;
+    user-select:none;
+  }
+  th.sortable:hover{ color:var(--text); }
+  th .arrow{ font-size:10px; opacity:0.6; }
+  tbody tr:hover{ background:var(--panel); }
+  .calc-wrap{
+    padding:16px 24px 50px;
+    max-width:900px;
+  }
+  .calc-block{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+  .calc-block h3{
+    margin:0 0 10px;
+    font-size:14px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .effect-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .effect-row label{
+    font-size:13px;
+    color:var(--text-dim);
+    min-width:110px;
+  }
+  .checkbox-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px 16px;
+  }
+  .checkbox-row{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-size:13px;
+  }
+  .checkbox-row input{ margin:0; }
+  .checkbox-row .mult{
+    color:var(--text-dim);
+    font-size:12px;
+  }
+  .input-pair{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .input-pair .field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .input-pair label{
+    font-size:13px;
+    color:var(--text-dim);
+  }
+  .result-block{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px;
+  }
+  .result-line{
+    font-size:15px;
+    margin-bottom:6px;
+  }
+  .result-line b{ color:var(--accent); }
+  .result-line.dim{
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .ambiguity-note{
+    font-size:12px;
+    color:var(--warn);
+    border-left:3px solid var(--warn);
+    padding-left:10px;
+    margin:10px 0;
+  }
+  .snapshot-note{
+    font-size:12px;
+    color:var(--text-dim);
+    border-left:3px solid var(--border);
+    padding-left:10px;
+    margin:10px 24px;
+    max-width:860px;
+  }
+  .snapshot-note.warn{ border-left-color:var(--accent); }
+  footer.sources{
+    padding:16px 24px 60px;
+    border-top:1px solid var(--border);
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  footer.sources a{ color:var(--text-dim); }
+  footer.sources li{ margin-bottom:6px; }
+  .not-published{ color:var(--text-dim); font-style:italic; }
+  .fan-ref-note{
+    font-size:12px;
+    color:var(--text-dim);
+    padding:10px 24px 0;
+  }
+  .remove-btn{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    border-radius:4px;
+    padding:4px 8px;
+    cursor:pointer;
+    font-size:12px;
+  }
+  .add-btn{
+    background:none;
+    border:1px solid var(--accent);
+    color:var(--accent);
+    border-radius:4px;
+    padding:6px 12px;
+    cursor:pointer;
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Potion Craft Potion Price Calculator</h1>
+  <p>Unofficial fan reference, not affiliated with or endorsed by niceplay games or the makers of Potion Craft: Alchemist Simulator. A customer is waiting at the counter -- look up a potion's base price, or work out what your brewed potion will actually sell for once Trading skill, Popularity, and the customer's special requests are counted in.</p>
+</header>
+
+<div class="snapshot-note warn" id="site-note"></div>
+
+<nav class="tabs">
+  <div class="tab active" data-section="prices">Base Prices (<span id="potion-count"></span>)</div>
+  <div class="tab" data-section="calculator">Price Calculator</div>
+  <div class="tab" data-section="sources">Sources &amp; Caveats</div>
+</nav>
+
+<section id="prices" class="active">
+  <div class="controls">
+    <input type="search" id="price-search" placeholder="Search potions..." />
+  </div>
+  <div class="table-wrap">
+    <table id="price-table">
+      <thead>
+        <tr>
+          <th class="sortable" data-sort="name">Potion</th>
+          <th class="sortable" data-sort="basePrice">Base Price</th>
+        </tr>
+      </thead>
+      <tbody id="price-rows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="calculator">
+  <div class="calc-wrap">
+
+    <div class="calc-block">
+      <h3>Main Potion</h3>
+      <div class="effect-row">
+        <label>Potion</label>
+        <select id="main-potion"></select>
+        <label>Strength</label>
+        <select id="main-strength"></select>
+      </div>
+    </div>
+
+    <div class="calc-block">
+      <h3>Additional Accepted Effects (up to 3)</h3>
+      <div id="additional-rows"></div>
+      <button class="add-btn" id="add-additional">+ Add effect</button>
+      <div class="ambiguity-note">Source note: "Additional" adds another Price*Strength term to the base sum, and the source states up to 3 are possible if all effects are desired by the customer. It does not state what happens with a 4th, so this calculator caps it at 3.</div>
+    </div>
+
+    <div class="calc-block">
+      <h3>Special Request Multipliers</h3>
+      <div class="checkbox-grid" id="special-request-checkboxes"></div>
+      <div class="ambiguity-note">Ambiguity disclosed, not guessed: the source lists these as independent bonuses but does not state which combinations are possible in a single real transaction (e.g. whether more than one "maximal N types of ingredient" row can apply at once, or whether the "Additional fitting Effects" rows can combine with an "Additional" accepted effect above). This calculator lets you check any combination and multiplies them all together per the published formula; it is on you to know which combination matches your actual in-game request.</div>
+    </div>
+
+    <div class="calc-block">
+      <h3>Trading Talent &amp; Popularity</h3>
+      <div class="input-pair">
+        <div class="field">
+          <label for="trading-percent">Trading bonus (%)</label>
+          <input type="number" id="trading-percent" min="0" step="1" value="0" />
+        </div>
+        <div class="field">
+          <label for="popularity-percent">Popularity bonus (%)</label>
+          <input type="number" id="popularity-percent" min="0" step="1" value="0" />
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-block">
+      <h3>Haggling</h3>
+      <div class="effect-row">
+        <label>Difficulty</label>
+        <select id="haggle-difficulty"></select>
+      </div>
+    </div>
+
+    <div class="result-block" id="result-block"></div>
+
+  </div>
+</section>
+
+<section id="sources">
+  <div class="fan-ref-note" style="padding:16px 24px;">
+    This page is built entirely from one static source page -- see the footer below for the full citation and every caveat.
+  </div>
+</section>
+
+<footer class="sources">
+  Sources &amp; caveats:
+  <ul>
+    <li>All base prices, the formula, the strength/special-request/haggling multiplier tables, and the three worked examples used as this page's own tests -- <a href="https://kosgames.com/potion-craft-alchemist-simulator-potion-price-composition-version-1-0-5-38817/" target="_blank" rel="noopener">KosGames, "Potion Craft Alchemist Simulator: Potion Price Composition (Version 1.0.5)", published 2023-02-03, fetched 2026-11-18</a>.</li>
+    <li>A second candidate source (gaming.net, "Potion Craft: All Recipes &amp; How to Make Them") was fetched and checked for a cross-check, but it covers ingredient recipes, not the price formula or base-price table, so it contributes no data to this page.</li>
+  </ul>
+  <div style="margin-top:8px;">Data is from game version 1.0.5 (February 2023). This single source is the only dedicated price-composition writeup found -- no dedicated Potion Craft price calculator tool exists elsewhere (per Gate 2 search). Prices and multipliers may not match your current game version if the game has been patched since.</div>
+  <div style="margin-top:8px;">The source's three worked examples are reproduced exactly and used as this page's automated tests (see test.js): Mana III + Healing II with both special requests, Trading VII (70%), Popularity 20% = 499; Healing I with four non-satisfying "fitting" effects, Trading IV (40%), Popularity 30% = 91; and a Levitation weak-request example with six stacked multipliers = 17820, haggled at Very Hard = 26730.</div>
+  <div style="margin-top:8px;">Any value not published on the source is not guessed on this page. The source does not state game-mechanics constraints on which special-request checkboxes can be combined in an actual transaction -- that ambiguity is disclosed on the calculator itself rather than resolved by assumption.</div>
+  <div style="margin-top:8px;">This is an unofficial fan reference. It is not affiliated with, endorsed by, or certified by niceplay games or the publisher of Potion Craft: Alchemist Simulator. No game assets or artwork are used on this page.</div>
+</footer>
+
+<script src="data.js"></script>
+<script>
+  document.getElementById("potion-count").textContent = POTIONS.length;
+
+  function fmtPrice(n) {
+    return (Number.isInteger(n) ? n : n.toFixed(1)).toString();
+  }
+
+  // ---- Base Prices tab ----
+  const priceSearchEl = document.getElementById("price-search");
+  const priceRowsEl = document.getElementById("price-rows");
+  let priceSortKey = "basePrice", priceSortDir = -1;
+
+  function renderPrices() {
+    const q = priceSearchEl.value.trim().toLowerCase();
+    let filtered = POTIONS.filter(p => !q || p.name.toLowerCase().includes(q));
+    filtered = filtered.slice().sort((a, b) => {
+      const av = a[priceSortKey], bv = b[priceSortKey];
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * priceSortDir;
+      return String(av).localeCompare(String(bv)) * priceSortDir;
+    });
+    priceRowsEl.innerHTML = "";
+    for (const p of filtered) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${p.name}</td><td>${fmtPrice(p.basePrice)}</td>`;
+      priceRowsEl.appendChild(tr);
+    }
+  }
+
+  priceSearchEl.addEventListener("input", renderPrices);
+
+  document.querySelectorAll("#price-table th.sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      if (priceSortKey === key) { priceSortDir = -priceSortDir; } else { priceSortKey = key; priceSortDir = 1; }
+      document.querySelectorAll("#price-table th.sortable .arrow").forEach(a => a.remove());
+      const arrow = document.createElement("span");
+      arrow.className = "arrow";
+      arrow.textContent = priceSortDir === 1 ? "up" : "down";
+      th.appendChild(arrow);
+      renderPrices();
+    });
+  });
+
+  // ---- Calculator tab ----
+  function potionOptionsHtml() {
+    return POTIONS.map(p => `<option value="${p.name}">${p.name} (${fmtPrice(p.basePrice)})</option>`).join("");
+  }
+  function strengthOptionsHtml() {
+    return STRENGTH_OPTIONS.map(s => `<option value="${s.key}">${s.label} (x${s.multiplier})</option>`).join("");
+  }
+
+  const mainPotionEl = document.getElementById("main-potion");
+  const mainStrengthEl = document.getElementById("main-strength");
+  mainPotionEl.innerHTML = potionOptionsHtml();
+  mainStrengthEl.innerHTML = strengthOptionsHtml();
+
+  const additionalRowsEl = document.getElementById("additional-rows");
+  const addAdditionalBtn = document.getElementById("add-additional");
+  let additionalCount = 0;
+  const MAX_ADDITIONAL = 3;
+
+  function addAdditionalRow() {
+    if (additionalCount >= MAX_ADDITIONAL) return;
+    additionalCount++;
+    const row = document.createElement("div");
+    row.className = "effect-row";
+    row.dataset.additionalRow = "1";
+    row.innerHTML = `
+      <label>Additional</label>
+      <select class="additional-potion">${potionOptionsHtml()}</select>
+      <select class="additional-strength">${strengthOptionsHtml()}</select>
+      <button class="remove-btn" type="button">Remove</button>
+    `;
+    row.querySelector(".remove-btn").addEventListener("click", () => {
+      row.remove();
+      additionalCount--;
+      updateAddButton();
+      renderResult();
+    });
+    row.querySelectorAll("select").forEach(sel => sel.addEventListener("change", renderResult));
+    additionalRowsEl.appendChild(row);
+    updateAddButton();
+  }
+
+  function updateAddButton() {
+    addAdditionalBtn.disabled = additionalCount >= MAX_ADDITIONAL;
+    addAdditionalBtn.style.opacity = additionalCount >= MAX_ADDITIONAL ? "0.4" : "1";
+  }
+
+  addAdditionalBtn.addEventListener("click", () => { addAdditionalRow(); renderResult(); });
+
+  const checkboxGridEl = document.getElementById("special-request-checkboxes");
+  checkboxGridEl.innerHTML = SPECIAL_REQUEST_MULTIPLIERS.map(sr => `
+    <label class="checkbox-row">
+      <input type="checkbox" class="special-request-checkbox" value="${sr.key}" />
+      ${sr.label} <span class="mult">(x${Number(sr.multiplier.toFixed(4))})</span>
+    </label>
+  `).join("");
+  checkboxGridEl.querySelectorAll("input").forEach(cb => cb.addEventListener("change", renderResult));
+
+  const haggleDifficultyEl = document.getElementById("haggle-difficulty");
+  haggleDifficultyEl.innerHTML = HAGGLE_DIFFICULTIES.map(d => `<option value="${d.key}">${d.label} (x${d.min}-x${d.max})</option>`).join("");
+
+  const tradingPercentEl = document.getElementById("trading-percent");
+  const popularityPercentEl = document.getElementById("popularity-percent");
+  const resultBlockEl = document.getElementById("result-block");
+
+  function renderResult() {
+    const main = { potionName: mainPotionEl.value, strengthKey: mainStrengthEl.value };
+    const additionals = Array.from(additionalRowsEl.querySelectorAll("[data-additional-row]")).map(row => ({
+      potionName: row.querySelector(".additional-potion").value,
+      strengthKey: row.querySelector(".additional-strength").value,
+    }));
+    const specialRequestKeys = Array.from(checkboxGridEl.querySelectorAll("input:checked")).map(cb => cb.value);
+    const tradingPercent = Number(tradingPercentEl.value) || 0;
+    const popularityPercent = Number(popularityPercentEl.value) || 0;
+
+    const result = computePrice({ main, additionals, specialRequestKeys, tradingPercent, popularityPercent });
+    if (!result) {
+      resultBlockEl.innerHTML = `<div class="result-line not-published">Unable to compute -- check your selections.</div>`;
+      return;
+    }
+
+    const difficultyKey = haggleDifficultyEl.value;
+    const haggled = haggleRange(result.rounded, difficultyKey);
+
+    resultBlockEl.innerHTML = `
+      <div class="result-line">Unrounded price: <b>${result.unrounded.toFixed(4)}</b></div>
+      <div class="result-line">Rounded-down price (the price the customer pays before haggling): <b>${result.rounded}</b></div>
+      <div class="result-line">Haggle range (${HAGGLE_DIFFICULTIES.find(d => d.key === difficultyKey).label}): <b>${haggled.min}</b> to <b>${haggled.max}</b></div>
+      <div class="result-line dim">Formula: (Price*Strength + Additional) * Special Request Multipliers * Trading Talent * Popularity, rounded down. Source: KosGames, version 1.0.5.</div>
+    `;
+  }
+
+  mainPotionEl.addEventListener("change", renderResult);
+  mainStrengthEl.addEventListener("change", renderResult);
+  tradingPercentEl.addEventListener("input", renderResult);
+  popularityPercentEl.addEventListener("input", renderResult);
+  haggleDifficultyEl.addEventListener("change", renderResult);
+
+  document.getElementById("site-note").textContent =
+    "Snapshot fetched 2026-11-18 from KosGames (kosgames.com), published 2023-02-03, game version 1.0.5. Single-source page -- see Sources & Caveats for what that means and for the ambiguities this page discloses rather than guesses at.";
+
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      document.getElementById(tab.dataset.section).classList.add("active");
+    });
+  });
+
+  renderPrices();
+  renderResult();
+</script>
+
+</body>
+</html>
